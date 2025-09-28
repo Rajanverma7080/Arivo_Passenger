@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arivo - Passenger App</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        .mobile-container {
+            max-width: 375px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useContext, createContext } = React;
+
+        // Demo Data
+        const demoData = {
+            routes: [
+                {
+                    id: 1,
+                    from: "Chandigarh",
+                    to: "Amritsar",
+                    duration: "4h 30m",
+                    distance: "230 km",
+                    buses: [
+                        { 
+                            id: 1, 
+                            number: "PB-01-1234", 
+                            eta: "15 min", 
+                            fare: 250, 
+                            stops: ["Chandigarh", "Ludhiana", "Jalandhar", "Amritsar"],
+                            type: "AC Deluxe"
+                        },
+                        { 
+                            id: 2, 
+                            number: "PB-02-5678", 
+                            eta: "25 min", 
+                            fare: 280, 
+                            stops: ["Chandigarh", "Patiala", "Ludhiana", "Amritsar"],
+                            type: "AC Sleeper"
+                        }
+                    ]
+                },
+                {
+                    id: 2,
+                    from: "Ludhiana",
+                    to: "Delhi",
+                    duration: "5h 15m",
+                    distance: "310 km",
+                    buses: [
+                        { 
+                            id: 3, 
+                            number: "DL-03-9012", 
+                            eta: "20 min", 
+                            fare: 320, 
+                            stops: ["Ludhiana", "Ambala", "Karnal", "Delhi"],
+                            type: "AC Semi-Sleeper"
+                        }
+                    ]
+                },
+                {
+                    id: 3,
+                    from: "Chandigarh",
+                    to: "Delhi",
+                    duration: "4h 45m",
+                    distance: "245 km",
+                    buses: [
+                        { 
+                            id: 4, 
+                            number: "DL-04-3456", 
+                            eta: "30 min", 
+                            fare: 300, 
+                            stops: ["Chandigarh", "Ambala", "Panipat", "Delhi"],
+                            type: "AC Deluxe"
+                        }
+                    ]
+                }
+            ],
+            destinations: [
+                {
+                    id: 1,
+                    name: "Golden Temple, Amritsar",
+                    rating: 4.8,
+                    category: "Religious",
+                    image: "🏛️",
+                    shortDesc: "Holiest shrine of Sikhism",
+                    whyFamous: "The Golden Temple is the most sacred shrine of Sikhism and one of the most visited religious sites in the world.",
+                    history: "Built in the 16th century by Guru Ram Das, the fourth Sikh Guru, the Golden Temple (Harmandir Sahib) stands as a symbol of human brotherhood and equality. The temple was designed to be accessible from all four directions, symbolizing the openness of Sikhism to all people regardless of race, religion, or gender. The upper floors were covered with gold foil in the early 19th century by Maharaja Ranjit Singh, giving it the name 'Golden Temple'. The temple complex also houses the world's largest community kitchen, serving free meals to over 100,000 visitors daily.",
+                    highlights: ["24/7 free community kitchen", "Sacred pool (Amrit Sarovar)", "Golden architecture", "Spiritual atmosphere"],
+                    bestTime: "October to March",
+                    location: "Amritsar, Punjab"
+                },
+                {
+                    id: 2,
+                    name: "Rock Garden, Chandigarh",
+                    rating: 4.5,
+                    category: "Art & Culture",
+                    image: "🎨",
+                    shortDesc: "Unique sculpture garden made from waste",
+                    whyFamous: "Rock Garden is a unique sculpture garden famous for its creative use of industrial and home waste to create beautiful art installations.",
+                    history: "Created by Nek Chand Saini in 1957, the Rock Garden began as a secret project in his spare time. Working as a road inspector, Nek Chand started collecting waste materials and rocks from demolished buildings to create sculptures in a jungle clearing. For 18 years, he worked in secrecy, transforming 12 acres into a fantasy world of sculptures, waterfalls, and pathways. When discovered by authorities in 1975, instead of demolishing it, the government recognized its artistic value and gave Nek Chand a salary to continue his work. Today, it spans 40 acres and attracts millions of visitors annually, showcasing over 5,000 sculptures made entirely from recycled materials.",
+                    highlights: ["5000+ recycled sculptures", "Waterfall complex", "Amphitheater", "Unique eco-art concept"],
+                    bestTime: "October to March",
+                    location: "Chandigarh, Punjab"
+                },
+                {
+                    id: 3,
+                    name: "Jallianwala Bagh, Amritsar",
+                    rating: 4.3,
+                    category: "Historical",
+                    image: "🏛️",
+                    shortDesc: "Memorial of 1919 massacre",
+                    whyFamous: "Jallianwala Bagh is a historic garden and memorial that commemorates the tragic massacre of 1919, a pivotal moment in India's freedom struggle.",
+                    history: "On April 13, 1919, thousands of unarmed Indians gathered at Jallianwala Bagh for a peaceful protest against the oppressive Rowlatt Act. General Reginald Dyer ordered his troops to fire on the crowd without warning, killing hundreds and wounding over a thousand people. The garden, surrounded by high walls with only one narrow exit, became a death trap. This massacre shocked the world and galvanized the Indian independence movement. The bullet marks on the walls and the Martyrs' Well, where people jumped to escape bullets, still remain as testimony to this dark chapter. The site was converted into a national memorial in 1951 to honor the martyrs and preserve the memory of their sacrifice.",
+                    highlights: ["Martyrs' Well", "Bullet marks on walls", "Memorial museum", "Eternal flame"],
+                    bestTime: "October to March",
+                    location: "Amritsar, Punjab"
+                },
+                {
+                    id: 4,
+                    name: "Wagah Border",
+                    rating: 4.6,
+                    category: "Patriotic",
+                    image: "🇮🇳",
+                    shortDesc: "India-Pakistan border ceremony",
+                    whyFamous: "Wagah Border is famous for its daily flag-lowering ceremony, a spectacular display of patriotism and military pageantry between India and Pakistan.",
+                    history: "The Wagah border crossing was established in 1947 during the partition of India and Pakistan. The famous beating retreat ceremony began in 1959 and has become one of the most popular tourist attractions in Punjab. Every evening before sunset, soldiers from both countries perform an elaborate ceremony involving high kicks, aggressive gestures, and synchronized movements. The ceremony symbolizes the rivalry and brotherhood between the two nations. Thousands of spectators gather daily on both sides to witness this unique spectacle, cheering for their respective countries. The ceremony concludes with the simultaneous lowering of both flags and the closing of the gates, followed by a brief handshake between the commanding officers.",
+                    highlights: ["Daily flag ceremony", "Military parade", "Patriotic atmosphere", "Border experience"],
+                    bestTime: "October to March (Evening ceremony)",
+                    location: "Wagah, Punjab (32 km from Amritsar)"
+                },
+                {
+                    id: 5,
+                    name: "Anandpur Sahib",
+                    rating: 4.4,
+                    category: "Religious",
+                    image: "⛪",
+                    shortDesc: "Birthplace of Khalsa",
+                    whyFamous: "Anandpur Sahib is one of the most important pilgrimage sites for Sikhs, known as the birthplace of the Khalsa and home to several historic gurdwaras.",
+                    history: "Founded in 1665 by the ninth Sikh Guru, Guru Tegh Bahadur, Anandpur Sahib holds immense significance in Sikh history. It was here that Guru Gobind Singh, the tenth Sikh Guru, established the Khalsa in 1699, transforming Sikhism into its modern form. The city witnessed many battles as the Guru and his followers defended their faith against Mughal persecution. The five beloved ones (Panj Pyare) who first took Amrit (Sikh baptism) came from this very place. The city houses several important gurdwaras including Takht Sri Keshgarh Sahib, one of the five Takhts (seats of authority) in Sikhism. The annual Hola Mohalla festival, started by Guru Gobind Singh, is celebrated here with great fervor, featuring martial arts displays and religious gatherings.",
+                    highlights: ["Takht Sri Keshgarh Sahib", "Birthplace of Khalsa", "Hola Mohalla festival", "Historic gurdwaras"],
+                    bestTime: "October to March",
+                    location: "Anandpur Sahib, Punjab"
+                },
+                {
+                    id: 6,
+                    name: "Patiala Palace",
+                    rating: 4.2,
+                    category: "Heritage",
+                    image: "🏰",
+                    shortDesc: "Royal heritage and architecture",
+                    whyFamous: "Patiala Palace showcases the grandeur of Punjab's royal heritage with its magnificent architecture and rich collection of artifacts.",
+                    history: "Built in the 19th century by Maharaja Narinder Singh of Patiala, this palace complex represents the opulent lifestyle of Punjab's royal families. The palace is famous for its Indo-Saracenic architecture, combining Indian, Islamic, and European styles. The Patiala dynasty was one of the most powerful Sikh states, and their palace reflects their wealth and cultural patronage. The palace houses an impressive collection of paintings, manuscripts, coins, and weapons. The Sheesh Mahal (Palace of Mirrors) within the complex is particularly renowned for its intricate mirror work and frescoes. The palace also contains the world's largest turban and the famous Patiala necklace, once owned by the Maharaja. Today, parts of the palace have been converted into museums showcasing the rich heritage of Punjab.",
+                    highlights: ["Sheesh Mahal", "Royal artifacts collection", "Indo-Saracenic architecture", "Heritage museum"],
+                    bestTime: "October to March",
+                    location: "Patiala, Punjab"
+                },
+                {
+                    id: 7,
+                    name: "Sukhna Lake, Chandigarh",
+                    rating: 4.3,
+                    category: "Nature",
+                    image: "🏞️",
+                    shortDesc: "Serene artificial lake",
+                    whyFamous: "Sukhna Lake is a beautiful artificial lake that serves as a popular recreational spot and a symbol of Chandigarh's planned urban development.",
+                    history: "Created in 1958 by damming the Sukhna Choe, a seasonal stream coming down from the Shivalik Hills, Sukhna Lake was part of Le Corbusier's master plan for Chandigarh. The lake was designed to serve both as a water body for the city and a recreational area for its residents. The project involved extensive planning to ensure the lake's sustainability and integration with the city's ecosystem. Over the years, the lake has become a haven for migratory birds and a popular spot for water sports, morning walks, and boating. The lake is maintained through rainwater harvesting and has become a model for urban water body management. The surrounding area has been developed into a beautiful park with walking tracks, making it one of Chandigarh's most beloved attractions.",
+                    highlights: ["Boating facilities", "Bird watching", "Walking tracks", "Sunset views"],
+                    bestTime: "October to March",
+                    location: "Chandigarh, Punjab"
+                },
+                {
+                    id: 8,
+                    name: "Qila Mubarak, Patiala",
+                    rating: 4.1,
+                    category: "Historical",
+                    image: "🏛️",
+                    shortDesc: "Historic fort complex",
+                    whyFamous: "Qila Mubarak is a historic fort complex that served as the residence of the Patiala royal family and showcases Sikh architecture and heritage.",
+                    history: "Built in 1763 by Baba Ala Singh, the founder of Patiala, Qila Mubarak served as the main residence and administrative center of the Patiala state. The fort complex is a fine example of Sikh architecture, featuring a blend of Mughal and Rajput styles. The fort has witnessed many historical events, including meetings between Sikh rulers and British officials. Within the complex lies the Darbar Hall, where the Maharaja held court, and several palaces including Ran Baas and Qila Androon. The fort also houses a museum displaying weapons, paintings, and artifacts from the royal collection. The complex includes the famous Kali Temple, which has been a center of worship for centuries. The fort's architecture, with its intricate frescoes and mirror work, reflects the artistic patronage of the Patiala rulers.",
+                    highlights: ["Darbar Hall", "Royal museum", "Kali Temple", "Sikh architecture"],
+                    bestTime: "October to March",
+                    location: "Patiala, Punjab"
+                }
+            ]
+        };
+
+        // App Context
+        const AppContext = createContext();
+
+        const AppProvider = ({ children }) => {
+            const [user, setUser] = useState(null);
+            const [darkMode, setDarkMode] = useState(false);
+            const [currentScreen, setCurrentScreen] = useState('auth');
+            const [selectedRoute, setSelectedRoute] = useState(null);
+            const [selectedBus, setSelectedBus] = useState(null);
+            const [searchResults, setSearchResults] = useState([]);
+            const [fromLocation, setFromLocation] = useState('');
+            const [toLocation, setToLocation] = useState('');
+            const [showToast, setShowToast] = useState(false);
+            const [toastMessage, setToastMessage] = useState('');
+            const [isTracking, setIsTracking] = useState(true);
+            const [selectedDestination, setSelectedDestination] = useState(null);
+
+            const showToastMessage = (message) => {
+                setToastMessage(message);
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            };
+
+            const value = {
+                user, setUser,
+                darkMode, setDarkMode,
+                currentScreen, setCurrentScreen,
+                selectedRoute, setSelectedRoute,
+                selectedBus, setSelectedBus,
+                searchResults, setSearchResults,
+                fromLocation, setFromLocation,
+                toLocation, setToLocation,
+                showToast, toastMessage, showToastMessage,
+                isTracking, setIsTracking,
+                selectedDestination, setSelectedDestination
+            };
+
+            return (
+                <AppContext.Provider value={value}>
+                    {children}
+                </AppContext.Provider>
+            );
+        };
+
+        // Toast Component
+        const Toast = () => {
+            const { showToast, toastMessage, darkMode } = useContext(AppContext);
+
+            if (!showToast) return null;
+
+            return (
+                <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-lg shadow-lg ${
+                    darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
+                } slide-in`}>
+                    {toastMessage}
+                </div>
+            );
+        };
+
+        // Auth Screen
+        const AuthScreen = () => {
+            const { setUser, setCurrentScreen, showToastMessage, darkMode } = useContext(AppContext);
+            const [isLogin, setIsLogin] = useState(true);
+            const [formData, setFormData] = useState({
+                email: '',
+                password: '',
+                name: '',
+                phone: ''
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                
+                if (isLogin) {
+                    if (formData.email === 'user@demo.com' && formData.password === 'password') {
+                        setUser({
+                            name: 'Demo User',
+                            email: 'user@demo.com',
+                            phone: '+91 98765 43210'
+                        });
+                        setCurrentScreen('home');
+                        showToastMessage('Login successful!');
+                    } else {
+                        showToastMessage('Invalid credentials. Use demo account.');
+                    }
+                } else {
+                    setUser({
+                        name: formData.name,
+                        email: formData.email,
+                        phone: formData.phone
+                    });
+                    setCurrentScreen('home');
+                    showToastMessage('Account created successfully!');
+                }
+            };
+
+            const fillDemoCredentials = () => {
+                setFormData({
+                    ...formData,
+                    email: 'user@demo.com',
+                    password: 'password'
+                });
+                showToastMessage('Demo credentials filled!');
+            };
+
+            return (
+                <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-500 to-blue-700'} flex items-center justify-center p-4`}>
+                    <div className={`w-full max-w-md ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl p-6 fade-in`}>
+                        <div className="text-center mb-8">
+                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="bus" className="w-8 h-8 text-blue-600"></i>
+                            </div>
+                            <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>
+                                Welcome to Arivo
+                            </h1>
+                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                Your trusted travel companion
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {!isLogin && (
+                                <>
+                                    <input
+                                        type="text"
+                                        placeholder="Full Name"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                        className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                                        required
+                                    />
+                                    <input
+                                        type="tel"
+                                        placeholder="Phone Number"
+                                        value={formData.phone}
+                                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                        className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                                        required
+                                    />
+                                </>
+                            )}
+                            
+                            <input
+                                type="email"
+                                placeholder="Email"
+                                value={formData.email}
+                                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                                required
+                            />
+                            
+                            <input
+                                type="password"
+                                placeholder="Password"
+                                value={formData.password}
+                                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                                required
+                            />
+
+                            <button
+                                type="submit"
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors"
+                            >
+                                {isLogin ? 'Login' : 'Sign Up'}
+                            </button>
+                        </form>
+
+                        {isLogin && (
+                            <button
+                                onClick={fillDemoCredentials}
+                                className={`w-full mt-3 ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} text-sm`}
+                            >
+                                Demo: user@demo.com / password
+                            </button>
+                        )}
+
+                        <div className="text-center mt-6">
+                            <button
+                                onClick={() => setIsLogin(!isLogin)}
+                                className={`${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                            >
+                                {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Header Component
+        const Header = () => {
+            const { darkMode, setDarkMode, selectedBus, selectedRoute, currentScreen, isTracking } = useContext(AppContext);
+            const [currentTime, setCurrentTime] = useState(new Date());
+            const [etaTime, setEtaTime] = useState(null);
+            
+            useEffect(() => {
+                let timer;
+                if (isTracking && selectedBus && (currentScreen === 'liveTracking' || currentScreen === 'tracking')) {
+                    timer = setInterval(() => {
+                        setCurrentTime(new Date());
+                    }, 1000);
+                }
+                
+                return () => {
+                    if (timer) clearInterval(timer);
+                };
+            }, [isTracking, selectedBus, currentScreen]);
+            
+            useEffect(() => {
+                if (selectedBus && selectedBus.eta) {
+                    // Parse ETA (e.g., "15 min", "2h 30m") and calculate arrival time
+                    const etaString = selectedBus.eta;
+                    let totalMinutes = 0;
+                    
+                    if (etaString.includes('h')) {
+                        const hours = parseInt(etaString.match(/(\d+)h/)?.[1] || 0);
+                        const minutes = parseInt(etaString.match(/(\d+)m/)?.[1] || 0);
+                        totalMinutes = hours * 60 + minutes;
+                    } else if (etaString.includes('min')) {
+                        totalMinutes = parseInt(etaString.match(/(\d+)/)?.[1] || 0);
+                    }
+                    
+                    const arrivalTime = new Date(Date.now() + totalMinutes * 60 * 1000);
+                    setEtaTime(arrivalTime);
+                }
+            }, [selectedBus]);
+            
+            const formatTime = (date) => {
+                return date.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+            };
+            
+            const getTimeRemaining = () => {
+                if (!etaTime || !isTracking) return null;
+                
+                const now = new Date();
+                const diff = etaTime.getTime() - now.getTime();
+                
+                if (diff <= 0) return "Arrived";
+                
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                if (hours > 0) {
+                    return `${hours}h ${minutes}m`;
+                } else if (minutes > 0) {
+                    return `${minutes}m ${seconds}s`;
+                } else {
+                    return `${seconds}s`;
+                }
+            };
+            
+            const showETA = selectedBus && selectedRoute && (currentScreen === 'liveTracking' || currentScreen === 'tracking' || currentScreen === 'home');
+            
+            return (
+                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} px-4 py-3 shadow-sm flex justify-between items-center`}>
+                    <button
+                        onClick={() => setDarkMode(!darkMode)}
+                        className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-100 text-gray-600'}`}
+                    >
+                        <i data-lucide={darkMode ? 'sun' : 'moon'} className="w-5 h-5"></i>
+                    </button>
+                    
+                    <div className="text-center">
+                        <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                            Arivo
+                        </h1>
+                        <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            Good morning
+                        </p>
+                    </div>
+                    
+                    {showETA ? (
+                        <div className="text-right">
+                            <div className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-gray-800'} flex items-center`}>
+                                <i data-lucide="clock" className="w-4 h-4 mr-1 text-blue-500"></i>
+                                {etaTime ? formatTime(etaTime) : '--:--'}
+                            </div>
+                            <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center justify-end`}>
+                                <div className={`w-2 h-2 rounded-full mr-1 ${isTracking ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                                {isTracking ? (getTimeRemaining() || 'Calculating...') : 'Paused'}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="w-10"></div>
+                    )}
+                </div>
+            );
+        };
+
+        // Home Screen
+        const HomeScreen = () => {
+            const { 
+                fromLocation, setFromLocation, 
+                toLocation, setToLocation,
+                setSearchResults, setCurrentScreen,
+                showToastMessage, darkMode
+            } = useContext(AppContext);
+
+            const handleSearchBuses = () => {
+                if (!fromLocation || !toLocation) {
+                    showToastMessage('Please enter both locations');
+                    return;
+                }
+
+                const results = demoData.routes.filter(route => 
+                    route.from.toLowerCase().includes(fromLocation.toLowerCase()) ||
+                    route.to.toLowerCase().includes(toLocation.toLowerCase())
+                );
+                
+                setSearchResults(results);
+                setCurrentScreen('search');
+                showToastMessage('Searching for routes...');
+            };
+
+            const handleSelectManually = () => {
+                setCurrentScreen('manual');
+                showToastMessage('Select your destination manually');
+            };
+
+            return (
+                <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-4`}>
+                    <div className="space-y-6">
+                        {/* Search Form */}
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg`}>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                                        <i data-lucide="map-pin" className="w-4 h-4 inline mr-2"></i>
+                                        From
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={fromLocation}
+                                        onChange={(e) => setFromLocation(e.target.value)}
+                                        placeholder="Enter starting location"
+                                        className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                                        <i data-lucide="flag" className="w-4 h-4 inline mr-2"></i>
+                                        To
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={toLocation}
+                                        onChange={(e) => setToLocation(e.target.value)}
+                                        placeholder="Enter destination"
+                                        className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                                    />
+                                </div>
+                                
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={handleSearchBuses}
+                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center"
+                                    >
+                                        <i data-lucide="search" className="w-5 h-5 mr-2"></i>
+                                        Search Buses
+                                    </button>
+                                    
+                                    <button
+                                        onClick={handleSelectManually}
+                                        className={`w-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'} font-semibold py-3 rounded-lg transition-colors flex items-center justify-center`}
+                                    >
+                                        <i data-lucide="map" className="w-5 h-5 mr-2"></i>
+                                        Select Manually
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Actions */}
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg`}>
+                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>
+                                <i data-lucide="zap" className="w-5 h-5 inline mr-2"></i>
+                                Quick Actions
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button 
+                                    onClick={() => setCurrentScreen('liveTracking')}
+                                    className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-blue-50 hover:bg-blue-100'} transition-colors`}
+                                >
+                                    <i data-lucide="radio" className="w-6 h-6 text-blue-600 mx-auto mb-2"></i>
+                                    <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                        Live Tracking
+                                    </div>
+                                </button>
+                                <button className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-green-50 hover:bg-green-100'} transition-colors`}>
+                                    <i data-lucide="history" className="w-6 h-6 text-green-600 mx-auto mb-2"></i>
+                                    <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                        Trip History
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Manual Selection Screen
+        const ManualSelectionScreen = () => {
+            const { 
+                setSearchResults, setCurrentScreen,
+                showToastMessage, darkMode
+            } = useContext(AppContext);
+            const [destination, setDestination] = useState('');
+
+            const handleSearchBuses = () => {
+                if (!destination) {
+                    showToastMessage('Please enter your destination');
+                    return;
+                }
+
+                const results = demoData.routes.filter(route => 
+                    route.to.toLowerCase().includes(destination.toLowerCase()) ||
+                    route.from.toLowerCase().includes(destination.toLowerCase())
+                );
+                
+                setSearchResults(results);
+                setCurrentScreen('search');
+                showToastMessage('Searching for routes to your destination...');
+            };
+
+            const popularDestinations = ['Amritsar', 'Delhi', 'Ludhiana', 'Chandigarh'];
+
+            return (
+                <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-4`}>
+                    <div className="space-y-6">
+                        {/* Header */}
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="navigation" className="w-8 h-8 text-blue-600"></i>
+                            </div>
+                            <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>
+                                Select Your Destination
+                            </h2>
+                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                Enter where you want to go and we'll find the best routes
+                            </p>
+                        </div>
+
+                        {/* Destination Input */}
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg`}>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                                        <i data-lucide="map-pin" className="w-4 h-4 inline mr-2"></i>
+                                        Final Destination
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={destination}
+                                        onChange={(e) => setDestination(e.target.value)}
+                                        placeholder="Enter your destination (e.g., Amritsar, Delhi, Ludhiana)"
+                                        className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                                    />
+                                </div>
+                                
+                                <button
+                                    onClick={handleSearchBuses}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center"
+                                >
+                                    <i data-lucide="search" className="w-5 h-5 mr-2"></i>
+                                    Search Buses Now
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Popular Destinations */}
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg`}>
+                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>
+                                <i data-lucide="star" className="w-5 h-5 inline mr-2"></i>
+                                Popular Destinations
+                            </h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                {popularDestinations.map(city => (
+                                    <button
+                                        key={city}
+                                        onClick={() => setDestination(city)}
+                                        className={`p-3 rounded-lg border-2 border-dashed ${darkMode ? 'border-gray-600 hover:border-blue-500 text-gray-300 hover:text-white' : 'border-gray-300 hover:border-blue-500 text-gray-600 hover:text-blue-600'} transition-colors text-center`}
+                                    >
+                                        <i data-lucide="map-pin" className="w-4 h-4 mx-auto mb-1"></i>
+                                        <div className="text-sm font-medium">{city}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Note */}
+                        <div className={`${darkMode ? 'bg-yellow-900 border-yellow-700' : 'bg-yellow-50 border-yellow-200'} border rounded-2xl p-4`}>
+                            <div className="flex items-start">
+                                <i data-lucide="info" className="w-5 h-5 text-yellow-600 mr-3 mt-0.5"></i>
+                                <div>
+                                    <h4 className={`font-medium ${darkMode ? 'text-yellow-200' : 'text-yellow-800'} mb-1`}>
+                                        Important Note
+                                    </h4>
+                                    <p className={`text-sm ${darkMode ? 'text-yellow-300' : 'text-yellow-700'}`}>
+                                        This app provides fare calculation and bus information only. No actual ticket booking is available.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Search Results Screen
+        const SearchScreen = () => {
+            const { 
+                searchResults, setSelectedRoute, setCurrentScreen,
+                showToastMessage, darkMode
+            } = useContext(AppContext);
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                setTimeout(() => setLoading(false), 1500);
+            }, []);
+
+            const handleSelectRoute = (route) => {
+                setSelectedRoute(route);
+                setCurrentScreen('route');
+                showToastMessage('Route selected!');
+            };
+
+            if (loading) {
+                return (
+                    <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-4`}>
+                        <div className="space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg animate-pulse`}>
+                                    <div className={`h-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded mb-3`}></div>
+                                    <div className={`h-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded mb-2`}></div>
+                                    <div className={`h-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-2/3`}></div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-4`}>
+                    <div className="mb-4">
+                        <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>
+                            <i data-lucide="route" className="w-5 h-5 inline mr-2"></i>
+                            Available Routes
+                        </h2>
+                        <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            Found {searchResults.length} routes
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        {searchResults.map(route => (
+                            <div key={route.id} className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg fade-in`}>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} flex items-center`}>
+                                            <i data-lucide="map-pin" className="w-4 h-4 mr-2 text-green-500"></i>
+                                            {route.from} 
+                                            <i data-lucide="arrow-right" className="w-4 h-4 mx-2 text-gray-400"></i>
+                                            <i data-lucide="flag" className="w-4 h-4 mr-2 text-red-500"></i>
+                                            {route.to}
+                                        </h3>
+                                        <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center mt-1`}>
+                                            <i data-lucide="clock" className="w-4 h-4 mr-2"></i>
+                                            {route.duration} • 
+                                            <i data-lucide="navigation" className="w-4 h-4 ml-2 mr-1"></i>
+                                            {route.distance}
+                                        </p>
+                                    </div>
+                                    <i data-lucide="bus" className="w-8 h-8 text-blue-500"></i>
+                                </div>
+                                
+                                <div className="flex justify-between items-center">
+                                    <div className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center`}>
+                                        <i data-lucide="users" className="w-4 h-4 mr-2"></i>
+                                        {route.buses.length} buses available
+                                    </div>
+                                    <button
+                                        onClick={() => handleSelectRoute(route)}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center"
+                                    >
+                                        <i data-lucide="arrow-right" className="w-4 h-4 mr-2"></i>
+                                        Select Route
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Route Detail Screen
+        const RouteScreen = () => {
+            const { 
+                selectedRoute, setSelectedBus, setCurrentScreen,
+                showToastMessage, darkMode
+            } = useContext(AppContext);
+
+            const handleSelectBus = (bus) => {
+                setSelectedBus(bus);
+                setCurrentScreen('liveTracking');
+                showToastMessage('Bus selected! Starting live tracking...');
+            };
+
+            if (!selectedRoute) return null;
+
+            return (
+                <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-4`}>
+                    <div className="mb-6">
+                        <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>
+                            <i data-lucide="route" className="w-5 h-5 inline mr-2"></i>
+                            {selectedRoute.from} → {selectedRoute.to}
+                        </h2>
+                        <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center`}>
+                            <i data-lucide="clock" className="w-4 h-4 mr-2"></i>
+                            {selectedRoute.duration} • 
+                            <i data-lucide="navigation" className="w-4 h-4 ml-2 mr-1"></i>
+                            {selectedRoute.distance}
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        {selectedRoute.buses.map(bus => (
+                            <div key={bus.id} className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg fade-in`}>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} flex items-center`}>
+                                            <i data-lucide="bus" className="w-5 h-5 mr-2 text-blue-500"></i>
+                                            Bus No: {bus.number}
+                                        </h3>
+                                        <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center mt-1`}>
+                                            <i data-lucide="clock" className="w-4 h-4 mr-2"></i>
+                                            ETA: {bus.eta}
+                                        </p>
+                                        <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center mt-1`}>
+                                            <i data-lucide="shield-check" className="w-4 h-4 mr-2"></i>
+                                            {bus.type}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                            ₹{bus.fare}
+                                        </div>
+                                        <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                            Fare Only
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mb-4">
+                                    <h4 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2 flex items-center`}>
+                                        <i data-lucide="map" className="w-4 h-4 mr-2"></i>
+                                        Route Stops:
+                                    </h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {bus.stops.map((stop, index) => (
+                                            <span key={index} className={`px-3 py-1 rounded-full text-sm ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} flex items-center`}>
+                                                <i data-lucide="map-pin" className="w-3 h-3 mr-1"></i>
+                                                {stop}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className={`${darkMode ? 'bg-red-900 border-red-700' : 'bg-red-50 border-red-200'} border rounded-lg p-3 mb-4`}>
+                                    <div className="flex items-start">
+                                        <i data-lucide="alert-triangle" className="w-4 h-4 text-red-600 mr-2 mt-0.5"></i>
+                                        <p className={`text-xs ${darkMode ? 'text-red-300' : 'text-red-700'}`}>
+                                            <strong>Important:</strong> This is fare calculation only. No actual ticket booking available. Bus number and fare information provided for reference.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => handleSelectBus(bus)}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center"
+                                >
+                                    <i data-lucide="radio" className="w-5 h-5 mr-2"></i>
+                                    Live Tracking
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Live Tracking Screen
+        const LiveTrackingScreen = () => {
+            const { selectedBus, selectedRoute, darkMode, showToastMessage, isTracking, setIsTracking } = useContext(AppContext);
+            const [currentStopIndex, setCurrentStopIndex] = useState(1);
+            const [busPosition, setBusPosition] = useState({ lat: 30.7333, lng: 76.7794 });
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    if (isTracking && selectedBus) {
+                        setCurrentStopIndex(prev => {
+                            const nextIndex = prev < selectedBus.stops.length - 1 ? prev + 1 : prev;
+                            if (nextIndex !== prev) {
+                                showToastMessage(`Approaching ${selectedBus.stops[nextIndex]}`);
+                            }
+                            return nextIndex;
+                        });
+                        
+                        setBusPosition(prev => ({
+                            lat: prev.lat + (Math.random() - 0.5) * 0.01,
+                            lng: prev.lng + (Math.random() - 0.5) * 0.01
+                        }));
+                    }
+                }, 5000);
+
+                return () => clearInterval(interval);
+            }, [isTracking, selectedBus, showToastMessage]);
+
+            if (!selectedBus || !selectedRoute) {
+                return (
+                    <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-4 text-center`}>
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="map-pin" className="w-8 h-8 text-gray-400"></i>
+                        </div>
+                        <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>
+                            No Bus Selected
+                        </h3>
+                        <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            Please select a bus first to start live tracking
+                        </p>
+                    </div>
+                );
+            }
+
+            const completedStops = selectedBus.stops.slice(0, currentStopIndex);
+            const currentStop = selectedBus.stops[currentStopIndex];
+            const upcomingStops = selectedBus.stops.slice(currentStopIndex + 1);
+            const progress = (currentStopIndex / (selectedBus.stops.length - 1)) * 100;
+
+            return (
+                <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                    {/* Live Tracking Header */}
+                    <div className={`${darkMode ? 'bg-gradient-to-r from-blue-900 to-blue-800' : 'bg-gradient-to-r from-blue-500 to-blue-600'} p-4 text-white`}>
+                        <div className="flex items-center justify-between mb-3">
+                            <div>
+                                <h2 className="text-xl font-bold flex items-center">
+                                    <i data-lucide="radio" className="w-5 h-5 mr-2"></i>
+                                    Live Tracking
+                                </h2>
+                                <p className="text-blue-100 text-sm">Bus {selectedBus.number}</p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <div className={`w-3 h-3 rounded-full ${isTracking ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}></div>
+                                <span className="text-sm">{isTracking ? 'Live' : 'Offline'}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="mb-3">
+                            <div className="flex justify-between text-sm mb-1">
+                                <span>{selectedRoute.from}</span>
+                                <span>{Math.round(progress)}% Complete</span>
+                                <span>{selectedRoute.to}</span>
+                            </div>
+                            <div className="w-full bg-blue-400 rounded-full h-2">
+                                <div 
+                                    className="bg-white rounded-full h-2 transition-all duration-1000"
+                                    style={{ width: `${progress}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Route Progress Thumbnail */}
+                    <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-4 shadow-sm`}>
+                        <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+                            {selectedBus.stops.map((stop, index) => (
+                                <div key={index} className="flex items-center flex-shrink-0">
+                                    <div className={`flex flex-col items-center ${index <= currentStopIndex ? 'text-green-600' : darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                                            index < currentStopIndex ? 'bg-green-500 text-white' :
+                                            index === currentStopIndex ? 'bg-blue-500 text-white animate-pulse' :
+                                            darkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-500'
+                                        }`}>
+                                            {index < currentStopIndex ? (
+                                                <i data-lucide="check" className="w-4 h-4"></i>
+                                            ) : index === currentStopIndex ? (
+                                                <i data-lucide="map-pin" className="w-4 h-4"></i>
+                                            ) : (
+                                                index + 1
+                                            )}
+                                        </div>
+                                        <span className="text-xs mt-1 text-center max-w-16 truncate">{stop}</span>
+                                    </div>
+                                    {index < selectedBus.stops.length - 1 && (
+                                        <div className={`w-8 h-0.5 mx-1 ${index < currentStopIndex ? 'bg-green-500' : darkMode ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Map Section */}
+                    <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} m-4 rounded-2xl shadow-lg overflow-hidden`}>
+                        <div className="h-64 bg-gradient-to-br from-green-400 to-blue-500 relative">
+                            <div className="absolute inset-0 opacity-20">
+                                <svg className="w-full h-full" viewBox="0 0 400 300">
+                                    <path d="M50 150 Q200 100 350 150" stroke="white" strokeWidth="3" fill="none" opacity="0.6"/>
+                                    <path d="M50 200 Q200 180 350 200" stroke="white" strokeWidth="2" fill="none" opacity="0.4"/>
+                                    <path d="M100 50 Q200 150 300 250" stroke="white" strokeWidth="2" fill="none" opacity="0.4"/>
+                                </svg>
+                            </div>
+                            
+                            <div 
+                                className="absolute w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 animate-pulse"
+                                style={{ 
+                                    left: `${30 + (progress * 0.4)}%`, 
+                                    top: `${40 + Math.sin(progress * 0.1) * 10}%` 
+                                }}
+                            >
+                                <i data-lucide="bus" className="w-5 h-5"></i>
+                            </div>
+                            
+                            {selectedBus.stops.map((stop, index) => (
+                                <div
+                                    key={index}
+                                    className={`absolute w-4 h-4 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${
+                                        index <= currentStopIndex ? 'bg-green-500' : 'bg-gray-400'
+                                    }`}
+                                    style={{
+                                        left: `${20 + (index * 60 / selectedBus.stops.length)}%`,
+                                        top: `${60 + Math.sin(index * 0.5) * 20}%`
+                                    }}
+                                ></div>
+                            ))}
+                            
+                            <div className="absolute top-4 right-4 space-y-2">
+                                <button className="w-8 h-8 bg-white bg-opacity-90 rounded-lg flex items-center justify-center shadow-lg">
+                                    <i data-lucide="plus" className="w-4 h-4 text-gray-600"></i>
+                                </button>
+                                <button className="w-8 h-8 bg-white bg-opacity-90 rounded-lg flex items-center justify-center shadow-lg">
+                                    <i data-lucide="minus" className="w-4 h-4 text-gray-600"></i>
+                                </button>
+                                <button className="w-8 h-8 bg-white bg-opacity-90 rounded-lg flex items-center justify-center shadow-lg">
+                                    <i data-lucide="navigation" className="w-4 h-4 text-gray-600"></i>
+                                </button>
+                            </div>
+                            
+                            <div className="absolute bottom-4 left-4 bg-white bg-opacity-95 rounded-lg p-2 shadow-lg">
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                    <span className="text-xs font-medium text-gray-800">
+                                        Near {currentStop}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Trip Details */}
+                    <div className="p-4 space-y-4">
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 shadow-lg`}>
+                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-3 flex items-center`}>
+                                <i data-lucide="activity" className="w-5 h-5 mr-2 text-blue-500"></i>
+                                Current Status
+                            </h3>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="text-center">
+                                    <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                        {selectedBus.eta}
+                                    </div>
+                                    <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center justify-center`}>
+                                        <i data-lucide="clock" className="w-4 h-4 mr-1"></i>
+                                        ETA to Destination
+                                    </div>
+                                </div>
+                                <div className="text-center">
+                                    <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                        {Math.round(progress)}%
+                                    </div>
+                                    <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center justify-center`}>
+                                        <i data-lucide="trending-up" className="w-4 h-4 mr-1"></i>
+                                        Journey Complete
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 shadow-lg`}>
+                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-3 flex items-center`}>
+                                <i data-lucide="map" className="w-5 h-5 mr-2 text-green-500"></i>
+                                Route Progress
+                            </h3>
+                            
+                            <div className="space-y-3">
+                                {completedStops.length > 0 && (
+                                    <div>
+                                        <h4 className={`text-sm font-medium ${darkMode ? 'text-green-400' : 'text-green-600'} mb-2 flex items-center`}>
+                                            <i data-lucide="check-circle" className="w-4 h-4 mr-2"></i>
+                                            Completed Stops ({completedStops.length})
+                                        </h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {completedStops.map((stop, index) => (
+                                                <span key={index} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm flex items-center">
+                                                    <i data-lucide="check" className="w-3 h-3 mr-1"></i>
+                                                    {stop}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                <div>
+                                    <h4 className={`text-sm font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'} mb-2 flex items-center`}>
+                                        <i data-lucide="map-pin" className="w-4 h-4 mr-2"></i>
+                                        Current Location
+                                    </h4>
+                                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm flex items-center w-fit">
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
+                                        {currentStop}
+                                    </span>
+                                </div>
+                                
+                                {upcomingStops.length > 0 && (
+                                    <div>
+                                        <h4 className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-2 flex items-center`}>
+                                            <i data-lucide="clock" className="w-4 h-4 mr-2"></i>
+                                            Upcoming Stops ({upcomingStops.length})
+                                        </h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {upcomingStops.map((stop, index) => (
+                                                <span key={index} className={`px-3 py-1 ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} rounded-full text-sm flex items-center`}>
+                                                    <i data-lucide="circle" className="w-3 h-3 mr-1"></i>
+                                                    {stop}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 shadow-lg`}>
+                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-3 flex items-center`}>
+                                <i data-lucide="clock" className="w-5 h-5 mr-2 text-orange-500"></i>
+                                Time Details
+                            </h3>
+                            
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <div className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                        {Math.floor(progress * 2.5)}h {Math.floor((progress * 2.5 % 1) * 60)}m
+                                    </div>
+                                    <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                        Time Covered
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                        {selectedBus.eta}
+                                    </div>
+                                    <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                        ETA Remaining
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                        {selectedRoute.duration}
+                                    </div>
+                                    <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                        Total Duration
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <button
+                                onClick={() => setIsTracking(!isTracking)}
+                                className={`py-3 rounded-lg font-semibold transition-colors flex items-center justify-center ${
+                                    isTracking 
+                                        ? 'bg-red-600 hover:bg-red-700 text-white' 
+                                        : 'bg-green-600 hover:bg-green-700 text-white'
+                                }`}
+                            >
+                                <i data-lucide={isTracking ? 'pause' : 'play'} className="w-5 h-5 mr-2"></i>
+                                {isTracking ? 'Pause Tracking' : 'Resume Tracking'}
+                            </button>
+                            <button className={`py-3 rounded-lg font-semibold transition-colors flex items-center justify-center ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}>
+                                <i data-lucide="share" className="w-5 h-5 mr-2"></i>
+                                Share Location
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Explore Punjab Screen
+        const ExploreScreen = () => {
+            const { darkMode, setSelectedDestination, setCurrentScreen, showToastMessage } = useContext(AppContext);
+            const [selectedCategory, setSelectedCategory] = useState('All');
+            const [searchTerm, setSearchTerm] = useState('');
+
+            const categories = ['All', 'Religious', 'Historical', 'Heritage', 'Nature', 'Art & Culture', 'Patriotic'];
+
+            const filteredDestinations = demoData.destinations.filter(destination => {
+                const matchesCategory = selectedCategory === 'All' || destination.category === selectedCategory;
+                const matchesSearch = destination.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    destination.shortDesc.toLowerCase().includes(searchTerm.toLowerCase());
+                return matchesCategory && matchesSearch;
+            });
+
+            const handleDestinationSelect = (destination) => {
+                setSelectedDestination(destination);
+                setCurrentScreen('destinationDetail');
+                showToastMessage(`Exploring ${destination.name}...`);
+            };
+
+            const getCategoryColor = (category) => {
+                const colors = {
+                    'Religious': 'bg-orange-100 text-orange-800',
+                    'Historical': 'bg-red-100 text-red-800',
+                    'Heritage': 'bg-purple-100 text-purple-800',
+                    'Nature': 'bg-green-100 text-green-800',
+                    'Art & Culture': 'bg-blue-100 text-blue-800',
+                    'Patriotic': 'bg-yellow-100 text-yellow-800'
+                };
+                return colors[category] || 'bg-gray-100 text-gray-800';
+            };
+
+            const renderStars = (rating) => {
+                const fullStars = Math.floor(rating);
+                const hasHalfStar = rating % 1 !== 0;
+                const stars = [];
+
+                for (let i = 0; i < fullStars; i++) {
+                    stars.push(<i key={i} data-lucide="star" className="w-4 h-4 text-yellow-500 fill-current"></i>);
+                }
+                if (hasHalfStar) {
+                    stars.push(<i key="half" data-lucide="star-half" className="w-4 h-4 text-yellow-500 fill-current"></i>);
+                }
+                return stars;
+            };
+
+            return (
+                <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-4`}>
+                    <div className="space-y-6">
+                        {/* Header */}
+                        <div className="text-center">
+                            <div className="text-6xl mb-4">🏛️</div>
+                            <h2 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>
+                                Explore Punjab
+                            </h2>
+                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                Discover the rich heritage and culture of Punjab
+                            </p>
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 shadow-lg`}>
+                            <div className="relative">
+                                <i data-lucide="search" className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Search destinations..."
+                                    className={`w-full pl-10 pr-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Category Filter */}
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 shadow-lg`}>
+                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-3`}>
+                                Categories
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                                {categories.map(category => (
+                                    <button
+                                        key={category}
+                                        onClick={() => setSelectedCategory(category)}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                                            selectedCategory === category
+                                                ? 'bg-blue-600 text-white'
+                                                : darkMode 
+                                                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {category}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Destinations Grid */}
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                    {selectedCategory === 'All' ? 'All Destinations' : selectedCategory} 
+                                    <span className={`text-sm font-normal ${darkMode ? 'text-gray-300' : 'text-gray-600'} ml-2`}>
+                                        ({filteredDestinations.length} places)
+                                    </span>
+                                </h3>
+                            </div>
+
+                            {filteredDestinations.map(destination => (
+                                <div 
+                                    key={destination.id} 
+                                    className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg overflow-hidden fade-in cursor-pointer hover:shadow-xl transition-shadow`}
+                                    onClick={() => handleDestinationSelect(destination)}
+                                >
+                                    <div className="p-6">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="text-4xl">{destination.image}</div>
+                                                <div className="flex-1">
+                                                    <h4 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-1`}>
+                                                        {destination.name}
+                                                    </h4>
+                                                    <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-2`}>
+                                                        {destination.shortDesc}
+                                                    </p>
+                                                    <div className="flex items-center space-x-2">
+                                                        <div className="flex items-center">
+                                                            {renderStars(destination.rating)}
+                                                            <span className={`ml-1 text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                                                {destination.rating}
+                                                            </span>
+                                                        </div>
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(destination.category)}`}>
+                                                            {destination.category}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <i data-lucide="chevron-right" className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}></i>
+                                        </div>
+                                        
+                                        <div className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} text-sm mb-3`}>
+                                            <i data-lucide="map-pin" className="w-4 h-4 inline mr-1"></i>
+                                            {destination.location}
+                                        </div>
+                                        
+                                        <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-3`}>
+                                            <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'} line-clamp-2`}>
+                                                {destination.whyFamous}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {filteredDestinations.length === 0 && (
+                                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-8 shadow-lg text-center`}>
+                                    <div className="text-4xl mb-4">🔍</div>
+                                    <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>
+                                        No destinations found
+                                    </h3>
+                                    <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                        Try adjusting your search or category filter
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Destination Detail Screen
+        const DestinationDetailScreen = () => {
+            const { selectedDestination, darkMode, setCurrentScreen } = useContext(AppContext);
+
+            if (!selectedDestination) return null;
+
+            const getCategoryColor = (category) => {
+                const colors = {
+                    'Religious': 'bg-orange-100 text-orange-800',
+                    'Historical': 'bg-red-100 text-red-800',
+                    'Heritage': 'bg-purple-100 text-purple-800',
+                    'Nature': 'bg-green-100 text-green-800',
+                    'Art & Culture': 'bg-blue-100 text-blue-800',
+                    'Patriotic': 'bg-yellow-100 text-yellow-800'
+                };
+                return colors[category] || 'bg-gray-100 text-gray-800';
+            };
+
+            const renderStars = (rating) => {
+                const fullStars = Math.floor(rating);
+                const hasHalfStar = rating % 1 !== 0;
+                const stars = [];
+
+                for (let i = 0; i < fullStars; i++) {
+                    stars.push(<i key={i} data-lucide="star" className="w-4 h-4 text-yellow-500 fill-current"></i>);
+                }
+                if (hasHalfStar) {
+                    stars.push(<i key="half" data-lucide="star-half" className="w-4 h-4 text-yellow-500 fill-current"></i>);
+                }
+                return stars;
+            };
+
+            return (
+                <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                    {/* Header with Back Button */}
+                    <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-4 shadow-sm`}>
+                        <div className="flex items-center space-x-4">
+                            <button
+                                onClick={() => setCurrentScreen('explore')}
+                                className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
+                            >
+                                <i data-lucide="arrow-left" className="w-5 h-5"></i>
+                            </button>
+                            <div>
+                                <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                    {selectedDestination.name}
+                                </h1>
+                                <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                    Destination Details
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-4 space-y-6">
+                        {/* Hero Section */}
+                        <div className={`${darkMode ? 'bg-gradient-to-r from-blue-900 to-purple-900' : 'bg-gradient-to-r from-blue-500 to-purple-600'} rounded-2xl p-6 text-white shadow-lg`}>
+                            <div className="text-center">
+                                <div className="text-6xl mb-4">{selectedDestination.image}</div>
+                                <h2 className="text-2xl font-bold mb-2">{selectedDestination.name}</h2>
+                                <p className="text-blue-100 mb-4">{selectedDestination.shortDesc}</p>
+                                
+                                <div className="flex items-center justify-center space-x-4">
+                                    <div className="flex items-center">
+                                        {renderStars(selectedDestination.rating)}
+                                        <span className="ml-2 font-semibold">{selectedDestination.rating}</span>
+                                    </div>
+                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(selectedDestination.category)}`}>
+                                        {selectedDestination.category}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Location & Best Time */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 shadow-lg`}>
+                                <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2 flex items-center`}>
+                                    <i data-lucide="map-pin" className="w-5 h-5 mr-2 text-red-500"></i>
+                                    Location
+                                </h3>
+                                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                    {selectedDestination.location}
+                                </p>
+                            </div>
+                            
+                            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 shadow-lg`}>
+                                <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2 flex items-center`}>
+                                    <i data-lucide="calendar" className="w-5 h-5 mr-2 text-green-500"></i>
+                                    Best Time to Visit
+                                </h3>
+                                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                    {selectedDestination.bestTime}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Why Famous */}
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg`}>
+                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4 flex items-center`}>
+                                <i data-lucide="star" className="w-5 h-5 mr-2 text-yellow-500"></i>
+                                Why It's Famous
+                            </h3>
+                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}>
+                                {selectedDestination.whyFamous}
+                            </p>
+                        </div>
+
+                        {/* Historical Background */}
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg`}>
+                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4 flex items-center`}>
+                                <i data-lucide="book-open" className="w-5 h-5 mr-2 text-blue-500"></i>
+                                Historical Background
+                            </h3>
+                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} leading-relaxed text-justify`}>
+                                {selectedDestination.history}
+                            </p>
+                        </div>
+
+                        {/* Highlights */}
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg`}>
+                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4 flex items-center`}>
+                                <i data-lucide="check-circle" className="w-5 h-5 mr-2 text-green-500"></i>
+                                Key Highlights
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {selectedDestination.highlights.map((highlight, index) => (
+                                    <div key={index} className={`flex items-center p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                                        <i data-lucide="check" className="w-4 h-4 text-green-500 mr-3 flex-shrink-0"></i>
+                                        <span className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm`}>
+                                            {highlight}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Tourist Info */}
+                        <div className={`${darkMode ? 'bg-blue-900 border-blue-700' : 'bg-blue-50 border-blue-200'} border rounded-2xl p-4`}>
+                            <div className="flex items-start">
+                                <i data-lucide="info" className="w-5 h-5 text-blue-600 mr-3 mt-0.5"></i>
+                                <div>
+                                    <h4 className={`font-medium ${darkMode ? 'text-blue-200' : 'text-blue-800'} mb-1`}>
+                                        Tourist Information
+                                    </h4>
+                                    <p className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+                                        This information is provided for educational and tourism purposes. Please verify current visiting hours, entry fees, and accessibility before planning your visit.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Profile Screen
+        const ProfileScreen = () => {
+            const { 
+                user, setUser, setCurrentScreen, 
+                darkMode, setDarkMode, showToastMessage
+            } = useContext(AppContext);
+            const [isEditing, setIsEditing] = useState(false);
+            const [editForm, setEditForm] = useState({
+                name: user?.name || '',
+                email: user?.email || '',
+                phone: user?.phone || ''
+            });
+
+            const handleLogout = () => {
+                setUser(null);
+                setCurrentScreen('auth');
+                showToastMessage('Logged out successfully!');
+            };
+
+            const handleEditProfile = () => {
+                setIsEditing(true);
+                setEditForm({
+                    name: user?.name || '',
+                    email: user?.email || '',
+                    phone: user?.phone || ''
+                });
+            };
+
+            const handleSaveProfile = (e) => {
+                e.preventDefault();
+                setUser({
+                    ...user,
+                    name: editForm.name,
+                    email: editForm.email,
+                    phone: editForm.phone
+                });
+                setIsEditing(false);
+                showToastMessage('Profile updated successfully!');
+            };
+
+            const handleCancelEdit = () => {
+                setIsEditing(false);
+                setEditForm({
+                    name: user?.name || '',
+                    email: user?.email || '',
+                    phone: user?.phone || ''
+                });
+            };
+
+            return (
+                <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-4`}>
+                    <div className="space-y-6">
+                        {/* User Info */}
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg`}>
+                            {!isEditing ? (
+                                <>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center space-x-4">
+                                            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                                                <i data-lucide="user" className="w-8 h-8"></i>
+                                            </div>
+                                            <div>
+                                                <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                                    {user?.name}
+                                                </h3>
+                                                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center text-sm`}>
+                                                    <i data-lucide="mail" className="w-4 h-4 mr-2"></i>
+                                                    {user?.email}
+                                                </p>
+                                                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center text-sm`}>
+                                                    <i data-lucide="phone" className="w-4 h-4 mr-2"></i>
+                                                    {user?.phone}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleEditProfile}
+                                            className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors"
+                                        >
+                                            <i data-lucide="edit-3" className="w-5 h-5"></i>
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <form onSubmit={handleSaveProfile} className="space-y-4">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                            <i data-lucide="edit-3" className="w-5 h-5 inline mr-2"></i>
+                                            Edit Profile
+                                        </h3>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                                            <i data-lucide="user" className="w-4 h-4 inline mr-2"></i>
+                                            Full Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editForm.name}
+                                            onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                                            className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                                            required
+                                        />
+                                    </div>
+                                    
+                                    <div>
+                                        <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                                            <i data-lucide="mail" className="w-4 h-4 inline mr-2"></i>
+                                            Email Address
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={editForm.email}
+                                            onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                                            className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                                            required
+                                        />
+                                    </div>
+                                    
+                                    <div>
+                                        <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                                            <i data-lucide="phone" className="w-4 h-4 inline mr-2"></i>
+                                            Phone Number
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={editForm.phone}
+                                            onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                                            className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                                            required
+                                        />
+                                    </div>
+                                    
+                                    <div className="flex space-x-3 pt-4">
+                                        <button
+                                            type="submit"
+                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center"
+                                        >
+                                            <i data-lucide="check" className="w-5 h-5 mr-2"></i>
+                                            Save Changes
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleCancelEdit}
+                                            className={`flex-1 ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'} font-semibold py-3 rounded-lg transition-colors flex items-center justify-center`}
+                                        >
+                                            <i data-lucide="x" className="w-5 h-5 mr-2"></i>
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+
+                        {/* Settings */}
+                        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg`}>
+                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>
+                                <i data-lucide="settings" className="w-5 h-5 inline mr-2"></i>
+                                Settings
+                            </h3>
+                            
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <span className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} flex items-center`}>
+                                        <i data-lucide={darkMode ? 'moon' : 'sun'} className="w-4 h-4 mr-2"></i>
+                                        Dark Mode
+                                    </span>
+                                    <button
+                                        onClick={() => setDarkMode(!darkMode)}
+                                        className={`w-12 h-6 rounded-full ${darkMode ? 'bg-blue-600' : 'bg-gray-300'} relative transition-colors`}
+                                    >
+                                        <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-0.5'}`}></div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Logout */}
+                        <button
+                            onClick={handleLogout}
+                            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center"
+                        >
+                            <i data-lucide="log-out" className="w-5 h-5 mr-2"></i>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // Bottom Navigation
+        const BottomNav = () => {
+            const { currentScreen, setCurrentScreen, darkMode } = useContext(AppContext);
+
+            const navItems = [
+                { id: 'home', label: 'Home', icon: 'home' },
+                { id: 'liveTracking', label: 'Live Track', icon: 'radio' },
+                { id: 'explore', label: 'Explore', icon: 'map' },
+                { id: 'profile', label: 'Profile', icon: 'user' }
+            ];
+
+            return (
+                <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t px-4 py-2`}>
+                    <div className="flex justify-around">
+                        {navItems.map(item => (
+                            <button
+                                key={item.id}
+                                onClick={() => setCurrentScreen(item.id)}
+                                className={`flex flex-col items-center py-2 px-4 rounded-lg transition-colors ${
+                                    currentScreen === item.id 
+                                        ? 'bg-blue-100 text-blue-600' 
+                                        : darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                                }`}
+                            >
+                                <i data-lucide={item.icon} className="w-6 h-6 mb-1"></i>
+                                <span className="text-xs font-medium">{item.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Main App Component
+        const App = () => {
+            const { currentScreen, user, darkMode } = useContext(AppContext);
+
+            useEffect(() => {
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }, [currentScreen]);
+
+            const renderScreen = () => {
+                if (!user) return <AuthScreen />;
+                
+                switch (currentScreen) {
+                    case 'home': return <HomeScreen />;
+                    case 'manual': return <ManualSelectionScreen />;
+                    case 'search': return <SearchScreen />;
+                    case 'route': return <RouteScreen />;
+                    case 'liveTracking': return <LiveTrackingScreen />;
+                    case 'explore': return <ExploreScreen />;
+                    case 'destinationDetail': return <DestinationDetailScreen />;
+                    case 'profile': return <ProfileScreen />;
+                    default: return <HomeScreen />;
+                }
+            };
+
+            return (
+                <div className={`mobile-container ${darkMode ? 'bg-gray-900' : 'bg-white'} relative`}>
+                    {user && (
+                        <div className="fixed top-0 left-1/2 transform -translate-x-1/2 w-full max-w-[375px] z-30">
+                            <Header />
+                        </div>
+                    )}
+                    
+                    <div className={`${user ? 'pt-16 pb-20' : ''} min-h-screen overflow-y-auto`}>
+                        {renderScreen()}
+                    </div>
+                    
+                    {user && (
+                        <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-[375px] z-30">
+                            <BottomNav />
+                        </div>
+                    )}
+                    
+                    <Toast />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <AppProvider>
+                <App />
+            </AppProvider>
+        );
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9860bf1af27798f2',t:'MTc1OTAzNjM1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
